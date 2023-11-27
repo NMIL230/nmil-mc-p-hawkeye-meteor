@@ -2,12 +2,11 @@
 
 ## Introduction
 
----
+
 Hawkeye follows the development process for Spigot plugins. It is recommended to read the following tutorial before contributing: [Creating a Plugin with Maven using IntelliJ IDEA](https://www.spigotmc.org/wiki/creating-a-plugin-with-maven-using-intellij-idea/).
 
 ## Project Structure
 
----
 The project consists of several Java files, each serving a specific purpose:
 
 - `Hawkeye`: The main class of the plugin initializing components and sending data.
@@ -20,7 +19,6 @@ The project consists of several Java files, each serving a specific purpose:
 
 ## Adding New Observation Space Information
 
----
 To add new types of observational data:
 
 1. Insert your new method in the `ObservationSpaceGetter` file, for example:
@@ -40,7 +38,7 @@ To add new types of observational data:
 
 ## Adding New Event Listeners
 
----
+
 You can create new event listeners in the `PlayerEventListener` file. For example:
 
 ```java
@@ -60,7 +58,7 @@ according to the event type and automatically send a log.
 
 ## Adding New New Log Types
 
----
+
 To add a new type of log data to the Hawkeye plugin, follow the steps below:
 
 1. Add a new case in the `ObservationSpaceGetter` method. For instance:

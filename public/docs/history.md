@@ -4,7 +4,6 @@
 
 ### v0.2.0
 
----
 - Added four categories for events.
 - Provided more detailed event information, such as the location and type of blocks placed, as well as the tools used when breaking blocks.
 - Added the `onPlayerCraftItem` event listener.
@@ -14,7 +13,6 @@
 
 ### v0.1.0
 
----
 - Implemented multi-player support.
 - Set up multi-scheduled tasks for each player with varying frequencies:
     - Low frequency: 1 per second.
@@ -27,7 +25,6 @@
 
 ### v0.2.0
 
----
 - Provided the feature to reconnect to the Hawkeye plugin and check if the connection is successful.
 - Offered a display for server performance information.
 - Showed the number of logs sent from Hawkeye to ensure no data loss.
@@ -36,13 +33,11 @@
 
 ### v0.1.1
 
----
 - Fixed an issue where loading excessive amounts of JSON on the monitor page caused crashes.
 - Modified the layout of the monitor page.
 
 ### v0.1.0
 
----
 - Developed a full-stack application utilizing Meteor, MongoDB, Node.js, and React.js.
 - Supported multi-player functionality.
 - Created a WebSocket message handler/classifier.

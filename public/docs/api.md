@@ -6,14 +6,12 @@ to a specified port. The following content explains the data format and details 
 
 ## Parameter Definitions
 
----
 
 - <span style="color: orange;">**`OBSERVATION_RADIUS`**</span>: This parameter defines the radius around the player within which certain data is collected, such as nearby entities and blocks.
 - <span style="color: orange;">**`MAX_TARGET_DISTANCE`**</span>: This parameter specifies the maximum distance at which a player can target a block or an entity for it to be considered in logging.
 
 ## Information Collected
 
----
 
 - **Event**: Captures specific detailed string about the in-game event that occurred.
     - Example: `"player Steve interacted with block DIRT at [x=100, y=64, z=200]"`
@@ -56,7 +54,7 @@ to a specified port. The following content explains the data format and details 
 
 ## Log Types and Details
 
----
+
 ### 1. High Frequency Logs
 **Logged Information:**
 - Health
@@ -140,7 +138,6 @@ to a specified port. The following content explains the data format and details 
 
 ## JSON Format
 
----
 - title: "PLAYER_LOG_EVENT"
 - data: 
   - player: "deadcat8",

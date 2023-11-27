@@ -3,7 +3,6 @@ Hawkeye is a Spigot server plugin designed to collect various types of informati
 
 ## Installation
 
----
 ### Spigot Server
 To install the Spigot server, please follow the detailed instructions available on the Spigot website:
 [Spigot Installation Guide](https://www.spigotmc.org/wiki/spigot-installation/)
