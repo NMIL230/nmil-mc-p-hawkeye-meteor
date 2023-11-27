@@ -12,6 +12,7 @@ export default function Navbar() {
         </Typography>
         <Tabs value={false} aria-label="nav tabs">
           <Tab label="Dashboard" to="/" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
+          <Tab label="OpenAI" to="/openai" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
           <Tab label="Doc" to="/documentation" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
         </Tabs>
       </Toolbar>

@@ -5,6 +5,7 @@ import ServerPage from './ServerPage';
 import DocPage from './DocPage';
 import { Box } from '@mui/material';
 import MonitorPage from './MonitorPage';
+import PromptPage from "./PromptPage";
 
 export const App = () => {
   return (
@@ -14,6 +15,7 @@ export const App = () => {
         <Routes>
           <Route path="/" element={<ServerPage/>}/>
           <Route path="/documentation" element={<DocPage/>}/>
+          <Route path="/openai" element={<PromptPage/>}/>
           <Route path="/monitor/:documentId" element={<MonitorPage />} />
 
         </Routes>

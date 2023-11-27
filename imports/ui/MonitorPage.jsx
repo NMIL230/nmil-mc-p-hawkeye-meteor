@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import {List, ListItem, Paper, Container, Grid, Typography} from '@mui/material';
+import {List, ListItem, Paper, Container, Grid, Typography, Button} from '@mui/material';
 import { JSONTree } from 'react-json-tree';
 const theme = {
   scheme: 'hopscotch',
@@ -23,7 +23,7 @@ const theme = {
   base0F: '#b33508'
 };
 const MonitorPage = () => {
-  const [messages, setMessages] = useState([]);
+  // const [messages, setMessages] = useState([]);
 
   const [eventLogs, setEventLogs] = useState();
   const [highFrequencyLogs, setHighFrequencyLogs] = useState();
@@ -54,7 +54,7 @@ const MonitorPage = () => {
 
 
   function handleData(data) {
-    setMessages(prevMessages => [data, ...prevMessages]);
+    // setMessages(prevMessages => [data, ...prevMessages]);
 
     try {
       const jsonData = JSON.parse(data);
@@ -78,20 +78,8 @@ const MonitorPage = () => {
   return (
     <Container>
       <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Paper style={{ maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' , marginTop: '10px'}}>
-            <List >
-              {messages.map((log, index) => (
-                <ListItem key={index}>
-                  {JSON.stringify(log)}
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-        <Grid item xs={6}>
-
-          <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '10px'}}>
+        <Grid item xs={7}>
+          <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '20px'}}>
             <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
               High Frequency Logs
             </Typography>
@@ -103,7 +91,10 @@ const MonitorPage = () => {
             </Typography>
             <JSONTree data={lowFrequencyLogs || {}}theme={theme} invertTheme={false} />
           </Paper>
-          <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '10px'}}>
+         
+        </Grid>
+        <Grid  item xs={5}>
+          <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '20px'}}>
             <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
               Event Logs
             </Typography>

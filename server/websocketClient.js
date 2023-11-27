@@ -1,15 +1,20 @@
 import { WebSocket } from 'ws';
 import { Meteor } from 'meteor/meteor';
 import { PlayerLogs } from '/imports/api/links';
-import { HawkeyeHistory } from "../imports/api/links";
+import {HawkeyeHistory, WebSocketStatus, HawkeyeStatus} from "../imports/api/links";
 export const PlayerMap = {};
 
-function startWebSocketClient() {
+let ws = null;
+
+function createWebSocketConnection() {
   const ws = new WebSocket('ws://localhost:8887');
   const bound = Meteor.bindEnvironment((callback) => {callback()})
 
   ws.on('open', function open() {
     console.log('Connected to the Minecraft plugin server');
+    bound(function (){
+      WebSocketStatus.upsert({ _id: 'status' }, { $set: { status: 'open' } });
+    })
   });
 
   ws.on('message', function incoming(data) {
@@ -17,28 +22,42 @@ function startWebSocketClient() {
       //console.log('Received:', data);
       handleData(data);
       }
-
     )
-
   });
 
   ws.on('close', function close() {
     console.log('Disconnected from the Minecraft plugin server');
+    bound(function () {
+      WebSocketStatus.upsert({ _id: 'status' }, { $set: { status: 'close'} });
+    });
   });
 
   ws.on('error', function error(error) {
     console.error('WebSocket error:', error);
+    bound(function () {
+      WebSocketStatus.upsert({ _id: 'status' }, { $set: { status: 'error', message: error.toString() } });
+    });
   });
 }
+function startWebSocketClient() {
+  createWebSocketConnection();
+}
 
+Meteor.methods({
+  'reconnectWebSocket': function () {
+    console.log("Reconnecting WebSocket...");
+    if (ws) {
+      ws.close();
+    }
+    createWebSocketConnection();
+  }
+});
 function handleData(data) {
+
+
   try {
     const jsonData = JSON.parse(data);
     switch (jsonData.title) {
-      case 'SERVER_PLAYER_LOGIN':
-        handlePlayerLogin(jsonData);
-        console.log(PlayerMap)
-        break;
       case 'PLAYER_LOG_LOW_FREQUENCY':
         handlePlayerLog(jsonData,'PLAYER_LOG_LOW_FREQUENCY');
         break;
@@ -48,10 +67,16 @@ function handleData(data) {
       case 'PLAYER_LOG_EVENT':
         handlePlayerLog(jsonData, 'PLAYER_LOG_EVENT');
         break;
+      case 'SERVER_STATUS':
+        handleServerStatus(jsonData);
+        break;
       case 'SERVER_PLAYER_LOGOUT':
         handlePlayerLogout(jsonData);
         console.log(PlayerMap)
-
+        break;
+      case 'SERVER_PLAYER_LOGIN':
+        handlePlayerLogin(jsonData);
+        console.log(PlayerMap)
         break;
       default:
         console.log('Unknown data type:', jsonData.title);
@@ -59,6 +84,23 @@ function handleData(data) {
   } catch (error) {
     console.error('Error parsing JSON data:', error);
   }
+}
+function handleServerStatus(jsonData) {
+  const serverStatus = jsonData.data;
+
+  const statusRecord = {
+    timestamp: dateFormatter(new Date()), // 记录当前时间戳
+    usedMemory: serverStatus.usedMemory,
+    onlinePlayers: serverStatus.onlinePlayers,
+    serverTick: serverStatus.serverTick,
+    averagePing: serverStatus.averagePing
+  };
+  HawkeyeStatus.upsert({ _id: 'status' }, { $set: {  timestamp: dateFormatter(new Date()), // 记录当前时间戳
+      usedMemory: serverStatus.usedMemory,
+      onlinePlayers: serverStatus.onlinePlayers,
+      serverTick: serverStatus.serverTick,
+      averagePing: serverStatus.averagePing } });
+
 }
 function handlePlayerLog(jsonData, type) {
   const playerName = jsonData.data.player;
@@ -76,22 +118,32 @@ function handlePlayerLogin(jsonData) {
 
   PlayerMap[playerName] = logItemName;
   PlayerLogs.insert({ name: logItemName, player: playerName, logs: [] });
-  HawkeyeHistory.insert({ title: "[ " +  playerName + " ] " + " JOINED, Collecting Log...", time: timestamp, document: logItemName , type: 0});
+  HawkeyeHistory.insert({
+    title: "[ " +  playerName + " ] " + " Joined, Collecting Log...",
+    time: timestamp,
+    document: logItemName,
+    type: 0});
 
 
 }
 
 function handlePlayerLogout(jsonData) {
   const playerName = jsonData.data;
+  const count = jsonData.total_log;
   const timestamp = dateFormatter(new Date());
   const logItemName = PlayerMap[playerName];
-  HawkeyeHistory.insert({ title: "[ " +  playerName + " ] " + " LEFT, Finished Collection", time: timestamp, document: logItemName , type: 1});
+  HawkeyeHistory.insert({
+    title: "[ " +  playerName + " ] " + " Left, " + count + " logs received"  ,
+    time: timestamp,
+    document: logItemName ,
+    serverCount: count,
+    type: 1});
   HawkeyeHistory.update(
     { $and: [
-        { title: "[ " +  playerName + " ] " + " JOINED, Collecting Log..." },
+        { title: "[ " +  playerName + " ] " + " Joined, Collecting Log..." },
         { type: 0 }
       ]},
-    { $set: { type: 3, title: "[ " +  playerName + " ] " + " JOINED" }}
+    { $set: { type: 3, title: "[ " +  playerName + " ] " + " Joined" }}
   );
 
   if (PlayerMap[playerName]) {
