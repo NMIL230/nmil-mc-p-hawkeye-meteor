@@ -40,7 +40,7 @@ const MonitorPage = () => {
           setEventLogs(result.monitorLogEvent);
         }
       });
-    }, 1000); // 每 0.5 秒调用一次
+    }, 750); // 每 0.5 秒调用一次
 
     return () => {
       clearInterval(intervalId); // 组件卸载时清除定时器
