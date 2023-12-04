@@ -84,11 +84,13 @@ function handleData(data) {
         break;
       case 'SERVER_PLAYER_LOGOUT':
         handlePlayerLogout(jsonData);
-        console.log("Player "+ jsonData.data + " logged out, online players: " + PlayerMap)
+        console.log("Player "+ jsonData.data + " logged out, online players: ");
+        console.log(PlayerMap)
         break;
       case 'SERVER_PLAYER_LOGIN':
         handlePlayerLogin(jsonData);
-        console.log("Player "+ jsonData.data + " logged in, online players: " + PlayerMap)
+        console.log("Player "+ jsonData.data + " logged in, online players: ");
+        console.log(PlayerMap);
         break;
       default:
         console.log('Unknown data type:', jsonData.title);
