@@ -35,7 +35,7 @@ function ServerPage({ historyData, loading, isError, hawkeyeStatus }) {
   };
 
   const handleMonitor = (documentId) => {
-    navigate(`/monitor/${documentId}`);
+    navigate(`/hawkeye/monitor/${documentId}`);
   };
 
   const renderActionButton = (type, documentId) => {
