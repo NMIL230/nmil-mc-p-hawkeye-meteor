@@ -32,7 +32,7 @@
 - Monitor page:
   - Disabled frontend ws listener for security concern
   - Changed to callbacks for updating.
-  - Updating once per second.
+  - Updating twice per second.
 - Route configuration
 
 ### v0.3.0
