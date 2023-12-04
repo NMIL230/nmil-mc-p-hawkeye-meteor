@@ -14,7 +14,7 @@ function PromptPage() {
   };
 
   const handleGet = async () => {
-    Meteor.call('getChatGPTList',  (error, result) => {
+    Meteor.call('getChatGPTCheck',  (error, result) => {
       if (error) {
         console.error('Error from OpenAI:', error);
         setResponse('Error from OpenAI:'+ error);
@@ -42,7 +42,7 @@ function PromptPage() {
       </Typography>
 
       <TextField
-        label="prompt"
+        label="Message ChatGPT..."
         multiline
         rows={4}
         fullWidth
@@ -56,6 +56,7 @@ function PromptPage() {
       <Button variant="contained" color="primary" onClick={handleSubmit}>
         Send
       </Button>
+      <br/>
       <Typography variant="body1" gutterBottom>
         {response}
       </Typography>
