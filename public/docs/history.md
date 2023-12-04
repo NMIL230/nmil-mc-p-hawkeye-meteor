@@ -27,13 +27,16 @@
 
 ## Hawkeye-web Interface
 
-### v0.3.0
+### v0.3.1
 
-- OpenAI Page, a hello-world chatgpt prompt dialog.
 - Monitor page:
   - Disabled frontend ws listener for security concern
-  - Changed to callbacks for updating. 
+  - Changed to callbacks for updating.
   - Updating once per second.
+
+### v0.3.0
+
+- OpenAI Page, a hello-world Chat-gpt prompt dialog.
 - Deployment preparation
 
 ### v0.2.1
