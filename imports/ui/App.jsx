@@ -14,9 +14,12 @@ export const App = () => {
         <NavbarWithLocation/>
         <Routes>
           <Route path="/" element={<ServerPage/>}/>
-          <Route path="/documentation" element={<DocPage/>}/>
-          <Route path="/openai" element={<PromptPage/>}/>
-          <Route path="/monitor/:documentId" element={<MonitorPage />} />
+          <Route path="/*" element={<ServerPage/>}/>
+          <Route path="/hawkeye" element={<ServerPage/>}/>
+
+          <Route path="/hawkeye/documentation" element={<DocPage/>}/>
+          <Route path="/hawkeye/openai" element={<PromptPage/>}/>
+          <Route path="/hawkeye/monitor/:documentId" element={<MonitorPage />} />
 
         </Routes>
       </Box>

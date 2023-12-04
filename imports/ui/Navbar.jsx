@@ -11,9 +11,9 @@ export default function Navbar() {
           Hawkeye
         </Typography>
         <Tabs value={false} aria-label="nav tabs">
-          <Tab label="Dashboard" to="/" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
-          <Tab label="OpenAI" to="/openai" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
-          <Tab label="Doc" to="/documentation" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
+          <Tab label="Dashboard" to="/hawkeye" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
+          <Tab label="OpenAI" to="/hawkeye/openai" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
+          <Tab label="Doc" to="/hawkeye/documentation" component={NavLink} style={{ color: 'white',  marginTop: '4px' }}/>
         </Tabs>
       </Toolbar>
     </AppBar>
