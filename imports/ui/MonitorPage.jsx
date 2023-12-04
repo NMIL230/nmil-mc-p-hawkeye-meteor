@@ -25,55 +25,28 @@ const theme = {
 const MonitorPage = () => {
   // const [messages, setMessages] = useState([]);
 
-  const [eventLogs, setEventLogs] = useState();
   const [highFrequencyLogs, setHighFrequencyLogs] = useState();
   const [lowFrequencyLogs, setLowFrequencyLogs] = useState();
+  const [eventLogs, setEventLogs] = useState();
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8887');
-    ws.onopen = function open() {
-      console.log('Monitor Page: Connected to the Minecraft plugin server');
-    };
-
-    ws.onmessage = function incoming(event) {
-        handleData(event.data);
-    };
-
-    ws.onclose = function close() {
-      console.log('Monitor Page: Disconnected from the Minecraft plugin server');
-    };
-
-    ws.onerror = function error(error) {
-      console.error('WebSocket error:', error);
-    };
+    const intervalId = setInterval(() => {
+      Meteor.call('getMonitorLog', (error, result) => {
+        if (error) {
+          console.error('Error calling sendPlayerLog:', error);
+        } else {
+          setLowFrequencyLogs(result.monitorLogLow);
+          setHighFrequencyLogs(result.monitorLogHigh);
+          setEventLogs(result.monitorLogEvent);
+        }
+      });
+    }, 1000); // 每 0.5 秒调用一次
 
     return () => {
-      ws.close();
+      clearInterval(intervalId); // 组件卸载时清除定时器
     };
   }, []);
 
-
-  function handleData(data) {
-    // setMessages(prevMessages => [data, ...prevMessages]);
-
-    try {
-      const jsonData = JSON.parse(data);
-      switch (jsonData.title) {
-        case 'PLAYER_LOG_LOW_FREQUENCY':
-          setLowFrequencyLogs(jsonData);
-          break;
-        case 'PLAYER_LOG_HIGH_FREQUENCY':
-          setHighFrequencyLogs(jsonData);
-          break;
-        case 'PLAYER_LOG_EVENT':
-          setEventLogs(jsonData);
-          break;
-        default:
-      }
-    } catch (error) {
-      console.error('Error parsing JSON data:', error);
-    }
-  }
 
   return (
     <Container>

@@ -52,19 +52,31 @@ Meteor.methods({
     createWebSocketConnection();
   }
 });
+
+let monitorLogLow = null;
+let monitorLogHigh = null;
+let monitorLogEvent = null;
+
+Meteor.methods({
+  'getMonitorLog': function() {
+    return {monitorLogLow, monitorLogHigh, monitorLogEvent};
+  }
+});
+
 function handleData(data) {
-
-
   try {
     const jsonData = JSON.parse(data);
     switch (jsonData.title) {
       case 'PLAYER_LOG_LOW_FREQUENCY':
+        monitorLogLow = jsonData.data;
         handlePlayerLog(jsonData,'PLAYER_LOG_LOW_FREQUENCY');
         break;
       case 'PLAYER_LOG_HIGH_FREQUENCY':
+        monitorLogHigh = jsonData.data;
         handlePlayerLog(jsonData, 'PLAYER_LOG_HIGH_FREQUENCY');
         break;
       case 'PLAYER_LOG_EVENT':
+        monitorLogEvent = jsonData.data;
         handlePlayerLog(jsonData, 'PLAYER_LOG_EVENT');
         break;
       case 'SERVER_STATUS':
@@ -109,6 +121,7 @@ function handlePlayerLog(jsonData, type) {
 
   PlayerLogs.update({ name: logItemName }, { $push: { logs: {type: type, info: logContent} } });
 
+
 }
 function handlePlayerLogin(jsonData) {
 
@@ -123,7 +136,9 @@ function handlePlayerLogin(jsonData) {
     time: timestamp,
     document: logItemName,
     type: 0});
-
+  Meteor.publish('playerLogs', function () {
+    return PlayerLogs.find({ name: playerName });
+  });
 
 }
 
@@ -162,10 +177,9 @@ function dateFormatter(date) {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: true // 使用12小时制，对于24小时制，设置为false
+    hour12: true
   });
 
-// 使用formatter来获取格式化的字符串
   return formatter.format(date);
 }
 export default startWebSocketClient;
