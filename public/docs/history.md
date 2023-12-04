@@ -2,6 +2,10 @@
 
 ## Hawkeye Plugin
 
+### v0.2.1
+- Modify gitignore.
+- Deployment preparation, low-energy consumption plugins.
+
 ### v0.2.0
 
 - Added four categories for events.
@@ -9,7 +13,7 @@
 - Added the `onPlayerCraftItem` event listener.
 - Introduced a server performance monitoring module that tracks memory usage, TPS (ticks per second), ping, and the number of online players.
 - Updated the command set.
-- Documentation
+- Documentation.
 
 ### v0.1.0
 
@@ -22,6 +26,19 @@
 - Established an event callback interface.
 
 ## Hawkeye-web Interface
+
+### v0.3.0
+
+- OpenAI Page, a hello-world chatgpt prompt dialog.
+- Monitor page:
+  - Disabled frontend ws listener for security concern
+  - Changed to callbacks for updating. 
+  - Updating once per second.
+- Deployment preparation
+
+### v0.2.1
+
+- OpenAI Tested
 
 ### v0.2.0
 
