@@ -2,6 +2,10 @@
 
 ## Hawkeye Plugin
 
+### v0.2.2
+- pom.xml changed
+
+
 ### v0.2.1
 - Modify gitignore.
 - Deployment preparation, low-energy consumption plugins.
@@ -26,6 +30,17 @@
 - Established an event callback interface.
 
 ## Hawkeye-web Interface
+
+
+### v0.4.0
+
+- Batched Log Updates:
+  - Accumulate logs into batches of 200 per player, rather than updating the database with each individual log.
+- Scheduled Database OP:
+  - Perform batch updates every 10 seconds for all players, followed by releasing memory
+- Eliminate Data Loss
+- Monitor Page Optimized
+
 
 ### v0.3.1
 
