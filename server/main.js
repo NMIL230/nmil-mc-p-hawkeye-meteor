@@ -10,7 +10,7 @@ import {HawkeyeStatus} from "../imports/api/links";
 Meteor.publish('HawkeyeHistory', function () {
   return HawkeyeHistory.find();
 });
-Meteor.publish('PlayerLogs', function () {
+Meteor.publish('PlayerLnogs', function () {
   return PlayerLogs.find();
 });
 

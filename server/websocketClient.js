@@ -56,12 +56,27 @@ Meteor.methods({
 let monitorLogLow = null;
 let monitorLogHigh = null;
 let monitorLogEvent = null;
+const logBuffer = {};
 
 Meteor.methods({
   'getMonitorLog': function() {
     return {monitorLogLow, monitorLogHigh, monitorLogEvent};
   }
 });
+Meteor.setInterval(() => {
+  for (const logItemName in logBuffer) {
+    let currentBuffer = logBuffer[logItemName];
+
+    while (currentBuffer.length > 0 && currentBuffer[0].length >= 200) {
+      console.log("Meteor.setInterval pushed: " + currentBuffer[0].length);
+      PlayerLogs.update({ name: logItemName }, { $push: { logs: { $each: currentBuffer.shift() } } });
+    }
+
+    if (currentBuffer.length === 0) {
+      logBuffer[logItemName] = [[]];
+    }
+  }
+}, 10000); // 10秒
 
 function handleData(data) {
   try {
@@ -117,12 +132,31 @@ function handleServerStatus(jsonData) {
 
 }
 function handlePlayerLog(jsonData, type) {
-  const playerName = jsonData.data.player;
-  const logContent = jsonData.data.log;
-  const logItemName = PlayerMap[playerName];
+  // const playerName = jsonData.data.player;
+  // const logContent = jsonData.data.log;
+  // const logItemName = PlayerMap[playerName];
+  //
+  // PlayerLogs.update({ name: logItemName }, { $push: { logs: {type: type, info: logContent} } });
+  try {
+    const playerName = jsonData.data.player;
+    const logContent = jsonData.data.log;
+    const logItemName = PlayerMap[playerName];
 
-  PlayerLogs.update({ name: logItemName }, { $push: { logs: {type: type, info: logContent} } });
+    if (!logBuffer[logItemName]) {
+      logBuffer[logItemName] = [[]];
+    }
+    let currentBuffer = logBuffer[logItemName];
+    let currentLogArray = currentBuffer[currentBuffer.length - 1];
 
+    if (currentLogArray.length >= 200) {
+      currentBuffer.push([]);
+      currentLogArray = currentBuffer[currentBuffer.length - 1];
+    }
+
+    currentLogArray.push({ type: type, info: logContent });
+  } catch (error) {
+    console.error('Error parsing JSON data:', error);
+  }
 
 }
 function handlePlayerLogin(jsonData) {
@@ -149,6 +183,17 @@ function handlePlayerLogout(jsonData) {
   const count = jsonData.total_log;
   const timestamp = dateFormatter(new Date());
   const logItemName = PlayerMap[playerName];
+
+  if (logBuffer[logItemName]) {
+    logBuffer[logItemName].forEach(logArray => {
+      if (logArray.length > 0) {
+        console.log("handlePlayerLogout pushed: " + logArray.length);
+        PlayerLogs.update({ name: logItemName }, { $push: { logs: { $each: logArray } } });
+      }
+    });
+    delete logBuffer[logItemName];
+  }
+
   HawkeyeHistory.insert({
     title: "[ " +  playerName + " ] " + " Left, " + count + " logs received"  ,
     time: timestamp,
