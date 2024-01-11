@@ -132,11 +132,6 @@ function handleServerStatus(jsonData) {
 
 }
 function handlePlayerLog(jsonData, type) {
-  // const playerName = jsonData.data.player;
-  // const logContent = jsonData.data.log;
-  // const logItemName = PlayerMap[playerName];
-  //
-  // PlayerLogs.update({ name: logItemName }, { $push: { logs: {type: type, info: logContent} } });
   try {
     const playerName = jsonData.data.player;
     const logContent = jsonData.data.log;
