@@ -20,7 +20,7 @@ Meteor.methods({
         { role: "assistant", content: "Yes, customer managed keys are supported by Azure OpenAI" },
         { role: "user", content: "Do other Azure AI services support this too" },
       ];
-      const client = new OpenAIClient(endpoint, new AzureKeyCredential(openAiSecretKey));
+      const client = new OpenAIClient(endpoint, new AzureKeyCredential("e409ce30e8914a478912497601f58624"));
       const deploymentId = "gpt4";
       const result = await client.getChatCompletions(deploymentId, messages);
       for (const choice of result.choices) {
@@ -44,7 +44,7 @@ Meteor.methods({
         temperature: 0.7,
       }, {
         headers: {
-          'api-key': `${openAiSecretKey}`,
+          'api-key': `e409ce30e8914a478912497601f58624`,
           'Content-Type': 'application/json',
         }
       });

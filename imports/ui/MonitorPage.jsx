@@ -40,7 +40,7 @@ const MonitorPage = () => {
           setEventLogs(result.monitorLogEvent);
         }
       });
-    }, 500); // 每 0.5 秒调用一次
+    }, 100); // 每 0.1 秒调用一次
 
     return () => {
       clearInterval(intervalId); // 组件卸载时清除定时器
@@ -50,31 +50,27 @@ const MonitorPage = () => {
 
   return (
     <Container>
-      <Grid container spacing={2}>
-        <Grid item xs={7}>
-          <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '20px'}}>
-            <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
-              High Frequency Logs
-            </Typography>
-            <JSONTree data={highFrequencyLogs || {}}theme={theme} invertTheme={false} />
-          </Paper>
-          <Paper style={{ maxHeight: 300, overflow: 'auto', marginTop: '10px' }}>
-            <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
-              Low Frequency Logs
-            </Typography>
-            <JSONTree data={lowFrequencyLogs || {}}theme={theme} invertTheme={false} />
-          </Paper>
-         
-        </Grid>
-        <Grid  item xs={5}>
-          <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '20px'}}>
-            <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
-              Event Logs
-            </Typography>
-            <JSONTree data={eventLogs || {}} theme={theme} invertTheme={false} />
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '20px'}}>
+          <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
+            Player Pose Logs
+          </Typography>
+          <JSONTree data={highFrequencyLogs || {}}theme={theme} invertTheme={false} />
+        </Paper>
+        {/*<Paper style={{ maxHeight: 300, overflow: 'auto', marginTop: '10px' }}>*/}
+        {/*  <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>*/}
+        {/*    Low Frequency Logs*/}
+        {/*  </Typography>*/}
+        {/*  <JSONTree data={lowFrequencyLogs || {}}theme={theme} invertTheme={false} />*/}
+        {/*</Paper>*/}
+
+
+
+        <Paper style={{ maxHeight: 500, overflow: 'auto' , marginTop: '20px'}}>
+          <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>
+            Player Event Logs
+          </Typography>
+          <JSONTree data={eventLogs || {}} theme={theme} invertTheme={false} />
+        </Paper>
     </Container>
   );
 };

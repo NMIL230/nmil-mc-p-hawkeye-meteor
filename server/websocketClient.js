@@ -71,16 +71,16 @@ Meteor.setInterval(() => {
       console.log("Meteor.setInterval pushed: " + currentBuffer[0].length);
       PlayerLogs.update({ name: logItemName }, { $push: { logs: { $each: currentBuffer.shift() } } });
     }
-
     if (currentBuffer.length === 0) {
       logBuffer[logItemName] = [[]];
     }
   }
-}, 10000); // 10秒
+}, 10000); // 10s
 
 function handleData(data) {
   try {
     const jsonData = JSON.parse(data);
+    //console.log(jsonData)
     switch (jsonData.title) {
       case 'PLAYER_LOG_LOW_FREQUENCY':
         monitorLogLow = jsonData.data;
@@ -94,18 +94,23 @@ function handleData(data) {
         monitorLogEvent = jsonData.data;
         handlePlayerLog(jsonData, 'PLAYER_LOG_EVENT');
         break;
+
       case 'SERVER_STATUS':
         handleServerStatus(jsonData);
         break;
-      case 'SERVER_PLAYER_LOGOUT':
+      case 'BUILD_MASTER_END':
         handlePlayerLogout(jsonData);
-        console.log("Player "+ jsonData.data + " logged out, online players: ");
+        console.log("Player "+ jsonData.data + " build master end,  online players: ");
         console.log(PlayerMap)
         break;
-      case 'SERVER_PLAYER_LOGIN':
+      case 'BUILD_MASTER_START':
         handlePlayerLogin(jsonData);
-        console.log("Player "+ jsonData.data + " logged in, online players: ");
+        console.log("Player "+ jsonData.data + " build master start, the online players: ");
         console.log(PlayerMap);
+        break;
+      case 'BUILD_MASTER_MSG':
+        monitorLogEvent = jsonData.data;
+        handlePlayerLog(jsonData, 'BUILD_MASTER_MSG');
         break;
       default:
         console.log('Unknown data type:', jsonData.title);
@@ -118,7 +123,7 @@ function handleServerStatus(jsonData) {
   const serverStatus = jsonData.data;
 
   const statusRecord = {
-    timestamp: dateFormatter(new Date()), // 记录当前时间戳
+    timestamp: dateFormatter(new Date()),
     usedMemory: serverStatus.usedMemory,
     onlinePlayers: serverStatus.onlinePlayers,
     serverTick: serverStatus.serverTick,
@@ -163,7 +168,7 @@ function handlePlayerLogin(jsonData) {
   PlayerMap[playerName] = logItemName;
   PlayerLogs.insert({ name: logItemName, player: playerName, logs: [] });
   HawkeyeHistory.insert({
-    title: "[ " +  playerName + " ] " + " Joined, Collecting Log...",
+    title: "[ " +  playerName + " ] " + " Joined Build Master, Collecting Log...",
     time: timestamp,
     document: logItemName,
     type: 0});
@@ -190,17 +195,17 @@ function handlePlayerLogout(jsonData) {
   }
 
   HawkeyeHistory.insert({
-    title: "[ " +  playerName + " ] " + " Left, " + count + " logs received"  ,
+    title: "[ " +  playerName + " ] " + " Left Build Master, " + count + " logs received"  ,
     time: timestamp,
     document: logItemName ,
     serverCount: count,
     type: 1});
   HawkeyeHistory.update(
     { $and: [
-        { title: "[ " +  playerName + " ] " + " Joined, Collecting Log..." },
+        { title: "[ " +  playerName + " ] " + " Joined Build Master, Collecting Log..." },
         { type: 0 }
       ]},
-    { $set: { type: 3, title: "[ " +  playerName + " ] " + " Joined" }}
+    { $set: { type: 3, title: "[ " +  playerName + " ] " + " Joined Build Master" }}
   );
 
   if (PlayerMap[playerName]) {
