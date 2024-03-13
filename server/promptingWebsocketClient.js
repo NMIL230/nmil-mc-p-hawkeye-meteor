@@ -1,9 +1,14 @@
 import { WebSocket } from 'ws';
 import { Meteor } from 'meteor/meteor';
-import { PlayerLogs } from '/imports/api/links';
+import {AIResponses, PlayerLogs} from '/imports/api/links';
 import {HawkeyeHistory, WebSocketStatus, HawkeyeStatus} from "../imports/api/links";
+import axios from "axios";
+
+import { generatePromptFromLogs } from "./prompt/generatePromptFromLogs";
+
 export const PlayerMap = {};
 
+let BUFFER_SIZE = 100;
 let ws = null;
 
 function createWebSocketConnection() {
@@ -19,9 +24,9 @@ function createWebSocketConnection() {
 
   ws.on('message', function incoming(data) {
     bound(function (){
-      //console.log('Received:', data);
-      handleData(data);
-      }
+          //console.log('Received:', data);
+          handleData(data);
+        }
     )
   });
 
@@ -39,7 +44,7 @@ function createWebSocketConnection() {
     });
   });
 }
-function startWebSocketClient() {
+function startPromptingWebSocketClient() {
   createWebSocketConnection();
 }
 
@@ -53,34 +58,28 @@ Meteor.methods({
   }
 });
 
+let started = false;
+
 let monitorLogLow = null;
 let monitorLogHigh = null;
 let monitorLogEvent = null;
+
 const logBuffer = {};
+let promptLogBuffer = [];
 
 Meteor.methods({
   'getMonitorLog': function() {
     return {monitorLogLow, monitorLogHigh, monitorLogEvent};
   }
 });
-Meteor.setInterval(() => {
-  for (const logItemName in logBuffer) {
-    let currentBuffer = logBuffer[logItemName];
 
-    while (currentBuffer.length > 0 && currentBuffer[0].length >= 200) {
-      console.log("Meteor.setInterval pushed: " + currentBuffer[0].length);
-      PlayerLogs.update({ name: logItemName }, { $push: { logs: { $each: currentBuffer.shift() } } });
-    }
-    if (currentBuffer.length === 0) {
-      logBuffer[logItemName] = [[]];
-    }
-  }
-}, 10000); // 10s
 
 function handleData(data) {
   try {
     const jsonData = JSON.parse(data);
-    //console.log(jsonData)
+    // console.log(jsonData)
+    // console.log(jsonData)
+
     switch (jsonData.title) {
       case 'PLAYER_LOG_LOW_FREQUENCY':
         monitorLogLow = jsonData.data;
@@ -94,23 +93,18 @@ function handleData(data) {
         monitorLogEvent = jsonData.data;
         handlePlayerLog(jsonData, 'PLAYER_LOG_EVENT');
         break;
-
       case 'SERVER_STATUS':
         handleServerStatus(jsonData);
         break;
-      case 'BUILD_MASTER_END':
+      case 'SERVER_PLAYER_LOGOUT':
         handlePlayerLogout(jsonData);
-        console.log("Player "+ jsonData.data + " build master end,  online players: ");
+        console.log("Player "+ jsonData.data + " logged out, online players: ");
         console.log(PlayerMap)
         break;
-      case 'BUILD_MASTER_START':
+      case 'SERVER_PLAYER_LOGIN':
         handlePlayerLogin(jsonData);
-        console.log("Player "+ jsonData.data + " build master start, the online players: ");
+        console.log("Player "+ jsonData.data + " logged in, online players: ");
         console.log(PlayerMap);
-        break;
-      case 'BUILD_MASTER_MSG':
-        monitorLogEvent = jsonData.data;
-        handlePlayerLog(jsonData, 'BUILD_MASTER_MSG');
         break;
       default:
         console.log('Unknown data type:', jsonData.title);
@@ -119,23 +113,7 @@ function handleData(data) {
     console.error('Error parsing JSON data:', error);
   }
 }
-function handleServerStatus(jsonData) {
-  const serverStatus = jsonData.data;
 
-  const statusRecord = {
-    timestamp: dateFormatter(new Date()),
-    usedMemory: serverStatus.usedMemory,
-    onlinePlayers: serverStatus.onlinePlayers,
-    serverTick: serverStatus.serverTick,
-    averagePing: serverStatus.averagePing
-  };
-  HawkeyeStatus.upsert({ _id: 'status' }, { $set: {  timestamp: dateFormatter(new Date()), // 记录当前时间戳
-      usedMemory: serverStatus.usedMemory,
-      onlinePlayers: serverStatus.onlinePlayers,
-      serverTick: serverStatus.serverTick,
-      averagePing: serverStatus.averagePing } });
-
-}
 function handlePlayerLog(jsonData, type) {
   try {
     const playerName = jsonData.data.player;
@@ -148,18 +126,86 @@ function handlePlayerLog(jsonData, type) {
     let currentBuffer = logBuffer[logItemName];
     let currentLogArray = currentBuffer[currentBuffer.length - 1];
 
-    if (currentLogArray.length >= 200) {
+    if (currentLogArray.length >= BUFFER_SIZE) {
       currentBuffer.push([]);
       currentLogArray = currentBuffer[currentBuffer.length - 1];
     }
-
+    promptLogBuffer.push({ type: type, info: logContent });
     currentLogArray.push({ type: type, info: logContent });
   } catch (error) {
     console.error('Error parsing JSON data:', error);
   }
 
 }
+Meteor.setInterval(() => {
+  for (const logItemName in logBuffer) {
+    let currentBuffer = logBuffer[logItemName];
+
+    while (currentBuffer.length > 0 && currentBuffer[0].length >= BUFFER_SIZE) {
+      console.log("Meteor.setInterval pushed: " + currentBuffer[0].length);
+      PlayerLogs.update({ name: logItemName }, { $push: { logs: { $each: currentBuffer.shift() } } });
+    }
+
+    if (currentBuffer.length === 0) {
+      logBuffer[logItemName] = [[]];
+    }
+  }
+}, 10000); // 10秒
+
+Meteor.setInterval(() => {
+  if(started){
+    const Summary = generatePromptFromLogs(promptLogBuffer)
+    promptLogBuffer=[]
+    console.log("generatePromptFromLogs" + Summary)
+    processLogWithAI(Summary);
+
+  }
+
+}, 10000); // 10秒
+
+
+async function processLogWithAI(prompt) {
+  try {
+    const response = await getChatGPTResponse(prompt);
+
+
+    AIResponses.upsert({ _id: 'response' }, {$set: {
+      response,
+      createdAt: new Date()
+    }});
+  } catch (error) {
+    console.error('Error processing log with AI:', error);
+  }
+}
+
+async function getChatGPTResponse(input) {
+
+  try {
+    const response = await axios.post("https://openai-biomedical-prod.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2023-07-01-preview ", {
+      messages: [
+          { role: 'system', content: instruction },
+        { role: 'user', content: prompt }
+      ],
+      model: 'gpt-4',
+      max_tokens: 150,
+      temperature: 0.7,
+    }, {
+      headers: {
+        'api-key': `e409ce30e8914a478912497601f58624`,
+        'Content-Type': 'application/json',
+      }
+    });
+    //console.log(input)
+    console.log(response.data.choices[0].message)
+
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    throw new Meteor.Error('api-error', 'OpenAI API error');
+  }
+}
 function handlePlayerLogin(jsonData) {
+  started = true;
 
   const playerName = jsonData.data;
   const timestamp = dateFormatter(new Date());
@@ -168,7 +214,7 @@ function handlePlayerLogin(jsonData) {
   PlayerMap[playerName] = logItemName;
   PlayerLogs.insert({ name: logItemName, player: playerName, logs: [] });
   HawkeyeHistory.insert({
-    title: "[ " +  playerName + " ] " + " Joined Build Master, Collecting Log...",
+    title: "[ " +  playerName + " ] " + " Joined, Collecting Log...",
     time: timestamp,
     document: logItemName,
     type: 0});
@@ -176,9 +222,18 @@ function handlePlayerLogin(jsonData) {
     return PlayerLogs.find({ name: playerName });
   });
 
+  AIResponses.upsert({ _id: 'response' }, {$set: {
+      logItemName,
+      response: "",
+      createdAt: new Date()
+    }});
+
 }
 
 function handlePlayerLogout(jsonData) {
+  started = false;
+
+
   const playerName = jsonData.data;
   const count = jsonData.total_log;
   const timestamp = dateFormatter(new Date());
@@ -195,26 +250,42 @@ function handlePlayerLogout(jsonData) {
   }
 
   HawkeyeHistory.insert({
-    title: "[ " +  playerName + " ] " + " Left Build Master, " + count + " logs received"  ,
+    title: "[ " +  playerName + " ] " + " Left, " + count + " logs received"  ,
     time: timestamp,
     document: logItemName ,
     serverCount: count,
     type: 1});
   HawkeyeHistory.update(
-    { $and: [
-        { title: "[ " +  playerName + " ] " + " Joined Build Master, Collecting Log..." },
-        { type: 0 }
-      ]},
-    { $set: { type: 3, title: "[ " +  playerName + " ] " + " Joined Build Master" }}
+      { $and: [
+          { title: "[ " +  playerName + " ] " + " Joined, Collecting Log..." },
+          { type: 0 }
+        ]},
+      { $set: { type: 3, title: "[ " +  playerName + " ] " + " Joined" }}
   );
 
   if (PlayerMap[playerName]) {
-      delete PlayerMap[playerName];
-    }
+    delete PlayerMap[playerName];
+  }
 
 }
 
+function handleServerStatus(jsonData) {
+  const serverStatus = jsonData.data;
 
+  const statusRecord = {
+    timestamp: dateFormatter(new Date()),
+    usedMemory: serverStatus.usedMemory,
+    onlinePlayers: serverStatus.onlinePlayers,
+    serverTick: serverStatus.serverTick,
+    averagePing: serverStatus.averagePing
+  };
+  HawkeyeStatus.upsert({ _id: 'status' }, { $set: {  timestamp: dateFormatter(new Date()),
+      usedMemory: serverStatus.usedMemory,
+      onlinePlayers: serverStatus.onlinePlayers,
+      serverTick: serverStatus.serverTick,
+      averagePing: serverStatus.averagePing } });
+
+}
 function dateFormatter(date) {
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Chicago',
@@ -229,4 +300,4 @@ function dateFormatter(date) {
 
   return formatter.format(date);
 }
-export default startWebSocketClient;
+export default startPromptingWebSocketClient;

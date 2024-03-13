@@ -1,11 +1,15 @@
 import { Meteor } from 'meteor/meteor';
-import startWebSocketClient from "./websocketClient";
+import startBuildMasterWebSocketClient from "./buildmasterWebsocketClient";
+import startPromptingWebSocketClient from "./promptingWebsocketClient";
+
 import { HawkeyeHistory } from '/imports/api/links';
 import { PlayerLogs } from '/imports/api/links';
 import {Mongo} from "meteor/mongo";
-import './openAi';
+
+import './utils/openAi';
 import {WebSocketStatus} from '/imports/api/links';
 import {HawkeyeStatus} from "../imports/api/links";
+import { AIResponses } from '/imports/api/links';
 
 Meteor.publish('HawkeyeHistory', function () {
   return HawkeyeHistory.find();
@@ -21,7 +25,11 @@ Meteor.publish('HawkeyeStatus', function () {
   return HawkeyeStatus.find();
 });
 
+Meteor.publish('aiResponses', function publishAIResponses() {
+  return AIResponses.find();
+});
 
 Meteor.startup(() => {
-  startWebSocketClient();
+  startPromptingWebSocketClient();
+  // startBuildMasterWebSocketClient
 });

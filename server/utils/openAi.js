@@ -49,6 +49,8 @@ Meteor.methods({
         }
       });
       // console.log(response.data.choices[0].message)
+
+
       return response.data.choices[0].message.content;
     } catch (error) {
       console.error('OpenAI API error:', error);
