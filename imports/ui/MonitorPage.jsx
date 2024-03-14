@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {useTracker, withTracker} from 'meteor/react-meteor-data';
+import { Bar } from 'react-chartjs-2';
 
 import {List, ListItem, Paper, Container, Grid, Typography, Button} from '@mui/material';
 import { JSONTree } from 'react-json-tree';
 import {AIResponses} from "../api/links";
+
+
+import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
 const theme = {
   scheme: 'hopscotch',
   author: 'jan t. sott',
@@ -24,12 +31,52 @@ const theme = {
   base0E: '#c85e7c',
   base0F: '#b33508'
 };
+const RatingsChart = ({ data }) => {
+  const chartData = {
+    labels: Object.keys(data),
+    datasets: [{
+      label: 'Task Ratings',
+      backgroundColor: 'rgba(54, 162, 235, 0.5)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1,
+      hoverBackgroundColor: 'rgba(54, 162, 235, 0.7)',
+      hoverBorderColor: 'rgba(54, 162, 235, 1)',
+      data: Object.values(data).map(task => task.Rating)
+    }]
+  };
+
+  const options = {
+    indexAxis: 'y', // 确保这个属性被设置来指定水平条形图
+    elements: {
+      bar: {
+        borderWidth: 2,
+      }
+    },
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+      },
+      title: {
+        display: true,
+        text: 'Sub-task Ratings for Riding a Pig in Minecraft'
+      }
+    }
+  };
+
+  // 使用Bar组件
+  return <Bar data={chartData} options={options} />;
+};
+
 const MonitorPage = ({ aiResponses }) => {
   // const [messages, setMessages] = useState([]);
 
   const [highFrequencyLogs, setHighFrequencyLogs] = useState();
   const [lowFrequencyLogs, setLowFrequencyLogs] = useState();
   const [eventLogs, setEventLogs] = useState();
+
+  const [T_R_RidePig, setT_R_RidePig] = useState();
+
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -42,7 +89,7 @@ const MonitorPage = ({ aiResponses }) => {
           setEventLogs(result.monitorLogEvent);
         }
       });
-    }, 1000); // 每 0.1 秒调用一次
+    }, 1000);
 
     return () => {
       clearInterval(intervalId); // 组件卸载时清除定时器
@@ -50,27 +97,33 @@ const MonitorPage = ({ aiResponses }) => {
   }, []);
 
   useEffect(() => {
-    // 只有当aiResponses变化时才触发
-    if (aiResponses.length > 0) {
-      const latestResponse = aiResponses[aiResponses.length - 1].response;
-      speakText(latestResponse);
-    }
-  }, [aiResponses]);
-  const speakText = (text) => {
-    window.speechSynthesis.cancel()
-    console.log('Trying to speak:', text); // 添加日志来确认函数被调用
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.lang = 'en-US'; // 设置语言
-    // speech.lang = 'zh-CN'; // 设置语言
+    const intervalId = setInterval(() => {
+      Meteor.call('getT_R_RIDEPIG', (error, result) => {
+        if (error) {
+          console.error('Error calling sendPlayerLog:', error);
+        } else {
+          if (!!result) {
+            console.log(result)
+            const data = JSON.parse(result);
+            setT_R_RidePig(data);
+          } else {
+            console.log("undefined RIDE PIG result")
 
-    speech.volume = 1; // 设置音量
-    speech.rate = 1.3; // 设置语速
-    speech.pitch = 1; // 设置音调
-    speech.onerror = (event) => {
-      console.error('Speech synthesis error:', event.error); // 监听错误
+          }
+
+        }
+      });
+    }, 2000);
+
+    return () => {
+      clearInterval(intervalId);
     };
-    window.speechSynthesis.speak(speech);
-  };
+  }, []);
+
+  // useEffect(() => {
+  //   console.log(T_R_RidePig);
+  // }, [T_R_RidePig]);
+
   return (
       <Container>
         <Paper style={{maxHeight: 500, overflow: 'auto', marginTop: '20px'}}>
@@ -79,12 +132,7 @@ const MonitorPage = ({ aiResponses }) => {
           </Typography>
           <JSONTree data={highFrequencyLogs || {}} theme={theme} invertTheme={false}/>
         </Paper>
-        {/*<Paper style={{ maxHeight: 300, overflow: 'auto', marginTop: '10px' }}>*/}
-        {/*  <Typography variant="h6" style={{ fontWeight: 'bold', textAlign: 'center' }}>*/}
-        {/*    Low Frequency Logs*/}
-        {/*  </Typography>*/}
-        {/*  <JSONTree data={lowFrequencyLogs || {}}theme={theme} invertTheme={false} />*/}
-        {/*</Paper>*/}
+
 
 
         <Paper style={{maxHeight: 500, overflow: 'auto', marginTop: '20px'}}>
@@ -93,27 +141,33 @@ const MonitorPage = ({ aiResponses }) => {
           </Typography>
           <JSONTree data={eventLogs || {}} theme={theme} invertTheme={false}/>
         </Paper>
-        <Paper style={{ maxHeight: 1000, overflow: 'auto', marginTop: '20px' }}>
-          {aiResponses.map((response, index) => {
 
-            //speakText(response.response);
-            return (
-                <div key={index}>
-                  <Typography variant="h6" style={{fontWeight: 'bold'}}>AI Response:</Typography>
-                  <p>{response.response}</p> {/* 假设每个响应在集合中以text字段存储 */}
-                </div>
-            );
-              }
-          )}
+        {T_R_RidePig && <Paper style={{ margin: '20px 0', padding: '20px' }}>
+          <Typography variant="h6" style={{fontWeight: 'bold', textAlign: 'center'}}>
+            Task Recognition: Riding a Pig
+          </Typography>
+          <RatingsChart data={T_R_RidePig} />
+        </Paper>}
+
+        <Paper style={{maxHeight: 1000, overflow: 'auto', marginTop: '20px'}}>
+
+
+
+          {/*  {aiResponses.map((response, index) => {*/}
+
+          {/*    //speakText(response.response);*/}
+          {/*    return (*/}
+          {/*        <div key={index}>*/}
+          {/*          <Typography variant="h6" style={{fontWeight: 'bold'}}>AI Response:</Typography>*/}
+          {/*          <p>{response.response}</p> /!* 假设每个响应在集合中以text字段存储 *!/*/}
+          {/*        </div>*/}
+          {/*    );*/}
+          {/*      }*/}
+          {/*  )}*/}
         </Paper>
       </Container>
 
   );
-};
-
-export default withTracker(() => {
-  Meteor.subscribe('aiResponses');
-  return {
-    aiResponses: AIResponses.find({}, { sort: { createdAt: -1 } }).fetch(),
   };
-})(MonitorPage);
+  export default MonitorPage
+

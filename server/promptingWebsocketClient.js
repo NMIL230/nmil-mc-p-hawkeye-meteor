@@ -6,6 +6,9 @@ import axios from "axios";
 
 import { generatePromptFromLogs } from "./prompt/generatePromptFromLogs";
 
+import {Task_Rating_Prompt_Instruction} from "./prompt/Headers/Task_Rating_RidePig";
+
+
 export const PlayerMap = {};
 
 let BUFFER_SIZE = 100;
@@ -24,7 +27,7 @@ function createWebSocketConnection() {
 
   ws.on('message', function incoming(data) {
     bound(function (){
-          //console.log('Received:', data);
+          //console.log('Received:', data);reconnectWebSocket
           handleData(data);
         }
     )
@@ -67,9 +70,20 @@ let monitorLogEvent = null;
 const logBuffer = {};
 let promptLogBuffer = [];
 
+
+
+
 Meteor.methods({
   'getMonitorLog': function() {
     return {monitorLogLow, monitorLogHigh, monitorLogEvent};
+  }
+});
+
+let monitorT_R_RIDEPIG = null;
+
+Meteor.methods({
+  'getT_R_RIDEPIG': function() {
+    return monitorT_R_RIDEPIG;
   }
 });
 
@@ -154,41 +168,61 @@ Meteor.setInterval(() => {
 
 Meteor.setInterval(() => {
   if(started){
-    const Summary = generatePromptFromLogs(promptLogBuffer)
+
+    console.log("************************PROMPTING****************************")
+    console.log("************************PROMPTING****************************")
+    console.log("************************PROMPTING****************************")
+    console.log("************************PROMPTING****************************")
+    console.log("************************PROMPTING****************************")
+
+
+    const input = generatePromptFromLogs(promptLogBuffer)
     promptLogBuffer=[]
-    console.log("generatePromptFromLogs" + Summary)
-    processLogWithAI(Summary);
+
+    console.log("[PROMPT]:\n" + input)
+    console.log("************************RESPONSE****************************")
+    console.log("************************RESPONSE****************************")
+    console.log("************************RESPONSE****************************")
+    console.log("************************RESPONSE****************************")
+    console.log("************************RESPONSE****************************")
+
+    processLogWithAI(input).then(result => {
+      console.log("\n\n[RESPONSE]\n\n" + result)
+      monitorT_R_RIDEPIG = result
+    });
 
   }
-
 }, 10000); // 10秒
 
 
-async function processLogWithAI(prompt) {
+async function processLogWithAI(input) {
+
+  const instruction = Task_Rating_Prompt_Instruction;
+
   try {
-    const response = await getChatGPTResponse(prompt);
+    const response = await getChatGPTResponse(instruction, input);
 
-
-    AIResponses.upsert({ _id: 'response' }, {$set: {
-      response,
-      createdAt: new Date()
-    }});
+    // AIResponses.upsert({ _id: 'response' }, {$set: {
+    //   response,
+    //   createdAt: new Date()
+    // }});
+    return response;
   } catch (error) {
     console.error('Error processing log with AI:', error);
   }
 }
 
-async function getChatGPTResponse(input) {
+async function getChatGPTResponse(instruction, content) {
 
   try {
-    const response = await axios.post("https://openai-biomedical-prod.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2023-07-01-preview ", {
+    const response = await axios.post("https://openai-biomedical-prod.openai.azure.com/openai/deployments/gpt4/chat/completions?api-version=2024-02-15-preview", {
       messages: [
           { role: 'system', content: instruction },
-        { role: 'user', content: prompt }
+        { role: 'user', content: content }
       ],
       model: 'gpt-4',
-      max_tokens: 150,
-      temperature: 0.7,
+      // max_tokens: 1,x
+      // temperature: 1,
     }, {
       headers: {
         'api-key': `e409ce30e8914a478912497601f58624`,
@@ -196,8 +230,7 @@ async function getChatGPTResponse(input) {
       }
     });
     //console.log(input)
-    console.log(response.data.choices[0].message)
-
+    console.log(response.data)
     return response.data.choices[0].message.content;
   } catch (error) {
     console.error('OpenAI API error:', error);
@@ -206,6 +239,8 @@ async function getChatGPTResponse(input) {
 }
 function handlePlayerLogin(jsonData) {
   started = true;
+  promptLogBuffer=[]
+
 
   const playerName = jsonData.data;
   const timestamp = dateFormatter(new Date());
@@ -233,6 +268,7 @@ function handlePlayerLogin(jsonData) {
 function handlePlayerLogout(jsonData) {
   started = false;
 
+  console.log("logout")
 
   const playerName = jsonData.data;
   const count = jsonData.total_log;

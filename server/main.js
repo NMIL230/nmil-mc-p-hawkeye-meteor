@@ -1,5 +1,5 @@
 import { Meteor } from 'meteor/meteor';
-import startBuildMasterWebSocketClient from "./buildmasterWebsocketClient";
+// import startBuildMasterWebSocketClient from "./buildmasterWebsocketClient";
 import startPromptingWebSocketClient from "./promptingWebsocketClient";
 
 import { HawkeyeHistory } from '/imports/api/links';
